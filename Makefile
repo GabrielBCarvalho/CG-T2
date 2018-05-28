@@ -1,5 +1,5 @@
 all:
-	g++ -o main main.cpp -lGL -lGLU -lglut
+	g++ -std=c++11 -o main main.cpp -lGL -lGLU -lglut
 run:
 	./main
 install:

@@ -1,5 +1,10 @@
 #include <GL/glut.h>
 #include <stdlib.h>
+#include <cstdlib> 
+#include <iostream>
+#include <string>
+
+using namespace std;
 
 /// Constantes
 #define CUBO 1
@@ -8,6 +13,15 @@
 #define TORUS 4
 #define DODECAEDRO 5
 
+enum State {scanAngle, scanX, scanY, scanZ, waitS};
+enum Action {waitA, translate, rotate, scale};
+
+std::string toPrint = "";
+std::string input = "";
+
+State state = waitS;
+Action action = waitA;
+
 ///Define parametros para redimensionar a tela
 GLfloat angle, fAspect;
 ///Guarda a primitiva escolhida para ser mostrada
@@ -15,15 +29,52 @@ GLint primitiva;
 ///ID para a janela principal
 int mainWindow;
 ///Guarda as rotacoes
-float rotationX, rotationY;
+float rotationX, rotationY, rotationZ;
+float translateX, translateY, translateZ;
+float scaleX, scaleY, scaleZ;
+
+float x, y, z, ang;
+
+int lineHight = 25; // the hight of each line
+int lineMargin = 10; // the left margin for your text
+int currentHight = 25; // the y position of the cursor.
 
 /// Função callback chamada para fazer o desenho
 void Desenha(void)
 {
     glClear(GL_COLOR_BUFFER_BIT);
 
-    glRotatef(rotationX, 1.0f, 0.0f, 0.0f);
-    glRotatef(rotationY, 0.0f, 1.0f, 0.0f);
+
+    if(state == waitS){
+        switch(action){
+        case translate:
+            translateX += x;
+            translateY += y;
+            translateZ += z;
+            glTranslatef(translateX, translateY, translateZ);
+            action = waitA;
+            break;
+        case scale:
+            scaleX += x;
+            scaleY += y;
+            scaleZ += z;
+            glScalef(scaleX, scaleY, scaleZ);
+            action = waitA;
+            break;
+        case rotate:
+            rotationX += x;
+            rotationY += y;
+            rotationZ += z;
+            glRotatef(ang, rotationX, rotationY, rotationZ);
+            action = waitA;
+            break;
+        }
+    }
+    
+
+    //glRotatef(rotationX, 1.0f, 0.0f, 0.0f);
+    //glRotatef(rotationY, 0.0f, 1.0f, 0.0f);
+    //glRotatef
 
     switch (primitiva)
     {
@@ -43,6 +94,15 @@ void Desenha(void)
     //case DODECAEDRO:
     //    glutWireDodecahedron();
     //    break;
+    }
+
+    // Printar string
+    glRasterPos2i(-50, -50);
+    void * font = GLUT_BITMAP_9_BY_15;
+    for (std::string::iterator i = toPrint.begin(); i != toPrint.end(); ++i)
+    {
+        char c = *i;
+        glutBitmapCharacter(font, c);
     }
 
     glFlush();
@@ -137,12 +197,32 @@ void MenuPrimitiva(int op)
 ///Container para todo o menu(tambem guarda a funcao de sair do programa)
 void MenuPrincipal(int op)
 {
-    if(op == 3){
-        rotationX = rotationY = 0;
-        glLoadIdentity();
+    switch(op){
+        case 3:
+            rotationX = rotationY = rotationZ = 0;
+            translateX = translateY = translateZ = 0;
+            scaleX = scaleY = scaleZ = 1;
+            glLoadIdentity();
+            break;
+        case 4: //transladar
+            state = scanX;
+            toPrint = "Insira o valor de X: ";
+            action = translate;
+            break;
+        case 5: //escalar
+            state = scanX;
+            toPrint = "Insira o valor de X: ";
+            action = scale;
+            break;
+        case 6: //rotacionar
+            state = scanAngle;
+            toPrint = "Insira o valor do ângulo: ";
+            action = rotate;
+            break;
+        case 7:
+            exit(0);
+            break;
     }
-    if(op == 4)
-        exit(0);
 }
 
 ///Criacao do Menu
@@ -162,11 +242,15 @@ void CriaMenu()
     glutAddMenuEntry("Verde",1);
     glutAddMenuEntry("Azul",2);
 
+
     menu = glutCreateMenu(MenuPrincipal);
     glutAddSubMenu("Primitivas",submenu1);
     glutAddSubMenu("Cor",submenu2);
     glutAddMenuEntry("Reiniciar", 3); ///Reinicia o solido para a posicao inicial
-    glutAddMenuEntry("Sair", 4);
+    glutAddMenuEntry("Transladar", 4);
+    glutAddMenuEntry("Escalar", 5);
+    glutAddMenuEntry("Rotacionar", 6);
+    glutAddMenuEntry("Sair", 7);
     glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
 
@@ -195,16 +279,54 @@ void GerenciaTecladoEspecial(int button, int x, int y)
     Desenha();
 }
 
-/// Função callback chamada para gerenciar eventos de teclas normais do teclado
-void GerenciaTeclado(unsigned char button, int x, int y){
-    ///Zoom in e Zoom out
-    if(button == '+')
-        if (angle >= 10) angle -= 5;
-    if(button == '-')
-        if (angle <= 130) angle += 5;
 
-    EspecificaParametrosVisualizacao();
+/// Função callback chamada para gerenciar eventos de teclas normais do teclado
+void GerenciaTeclado(unsigned char key, int x, int y){
+    ///Zoom in e Zoom out
+    if(key == '+'){
+        if (angle >= 10) angle -= 5;
+    }
+    else if(key == '-'){
+        if (angle <= 130) angle += 5;
+    }
+    else if(key == 13){ // Enter
+        if(state == scanAngle){
+            ang = std::stof(input);
+            toPrint = "Insira o valor de X: ";
+            state = scanX;
+        }
+        else if (state == scanX){
+            x = std::stof(input);
+            toPrint = "Insira o valor de Y: ";
+            state = scanY;
+        }
+        else if (state == scanY){
+            y = std::stof(input);
+            toPrint = "Insira o valor de Z: ";
+            state = scanZ;
+        }
+        else if (state == scanZ){
+            z = std::stof(input);
+            state = waitS;
+            //action = waitA;
+            toPrint = "";
+        }
+        input = "";
+    }  
+    else{
+        if(state != waitS){
+            input += key;
+            toPrint += key;
+            //toPrint.append(input);
+        }
+    }
+    
+    //glColor3f(0.0, 1.0, 0.0); // text color
+    //glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, key); // print the color
+
+    //EspecificaParametrosVisualizacao();
 	glutPostRedisplay();
+    //Desenha();
 }
 
 /// Programa Principal
@@ -217,9 +339,14 @@ int main(int argc, char **argv)
 	mainWindow = glutCreateWindow("Visualizacao 3D");
 	///Callbacks
 	glutDisplayFunc(Desenha);
-	glutReshapeFunc(AlteraTamanhoJanela);
+
+    //glutKeyboardFunc(myKey); // register the key handler.
+
+	
+    glutReshapeFunc(AlteraTamanhoJanela);
 	glutMouseFunc(GerenciaMouse);
 	glutKeyboardFunc(GerenciaTeclado);
+    //glRasterPos2f(lineMargin, currentHight); // set the cursor to the initial position.
 	glutSpecialFunc(GerenciaTecladoEspecial);
 	InicializaMain();
 
