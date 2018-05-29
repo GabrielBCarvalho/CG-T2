@@ -13,8 +13,8 @@ using namespace std;
 #define TORUS 4
 #define DODECAEDRO 5
 
-enum State {scanAngle, scanX, scanY, scanZ, waitS};
-enum Action {waitA, translate, rotate, scale};
+enum State {scanAngle, scanX, scanY, scanZ, print, waitS};
+enum Action {waitA, translate, rotate, scale, mirrorX, mirrorY, mirrorZ};
 
 std::string toPrint = "";
 std::string input = "";
@@ -23,59 +23,61 @@ State state = waitS;
 Action action = waitA;
 
 ///Define parametros para redimensionar a tela
-GLfloat angle, fAspect;
+GLfloat angle = 45, fAspect;
 ///Guarda a primitiva escolhida para ser mostrada
 GLint primitiva;
 ///ID para a janela principal
 int mainWindow;
-///Guarda as rotacoes
-float rotationX, rotationY, rotationZ;
-float translateX, translateY, translateZ;
-float scaleX, scaleY, scaleZ;
+///Guarda as rotacoes, transl e scale.
+float rotationX = 0.0f, rotationY = 0.0f, rotationZ = 0.0f;
+float translateX = 0.0f, translateY = 0.0f, translateZ = 0.0f;
+float scaleX = 1.0f, scaleY = 1.0f, scaleZ = 1.0f;
 
-float x, y, z, ang;
+float a, b, z, angAux;
 
-int lineHight = 25; // the hight of each line
-int lineMargin = 10; // the left margin for your text
-int currentHight = 25; // the y position of the cursor.
 
 /// Função callback chamada para fazer o desenho
 void Desenha(void)
 {
     glClear(GL_COLOR_BUFFER_BIT);
 
-
-    if(state == waitS){
-        switch(action){
-        case translate:
-            translateX += x;
-            translateY += y;
-            translateZ += z;
-            glTranslatef(translateX, translateY, translateZ);
-            action = waitA;
-            break;
-        case scale:
-            scaleX += x;
-            scaleY += y;
-            scaleZ += z;
-            glScalef(scaleX, scaleY, scaleZ);
-            action = waitA;
-            break;
-        case rotate:
-            rotationX += x;
-            rotationY += y;
-            rotationZ += z;
-            glRotatef(ang, rotationX, rotationY, rotationZ);
-            action = waitA;
-            break;
-        }
-    }
     
+    if(state == print){
+        switch(action){
+            case translate:
+                translateX = a;
+                translateY = b;
+                translateZ = z;
+                glTranslatef(translateX, translateY, translateZ);
+                break;
+            case scale:
+                scaleX = a;
+                scaleY = b;
+                scaleZ = z;
+                glScalef(scaleX, scaleY, scaleZ);
+                break;
+            case rotate:
+                angle += angAux;
+                rotationX = a;
+                rotationY = b;
+                rotationZ = z;
+                glRotatef(angle, rotationX, rotationY, rotationZ);
+                break;
+            case mirrorX:
+                glScalef(-1, 1, 1);
+                break;
+            case mirrorY:
+                glScalef(1, -1, 1);
+                break;
+            case mirrorZ:
+                glScalef(1, 1, -1);
+                break;
+        }
+        state = waitS;
+        action = waitA;
+    }
 
-    //glRotatef(rotationX, 1.0f, 0.0f, 0.0f);
-    //glRotatef(rotationY, 0.0f, 1.0f, 0.0f);
-    //glRotatef
-
+    
     switch (primitiva)
     {
     case CUBO:
@@ -199,9 +201,9 @@ void MenuPrincipal(int op)
 {
     switch(op){
         case 3:
-            rotationX = rotationY = rotationZ = 0;
-            translateX = translateY = translateZ = 0;
-            scaleX = scaleY = scaleZ = 1;
+            rotationX = rotationY = rotationZ = 0.0f;
+            translateX = translateY = translateZ = 0.0f;
+            scaleX = scaleY = scaleZ = 1.0f;
             glLoadIdentity();
             break;
         case 4: //transladar
@@ -223,12 +225,25 @@ void MenuPrincipal(int op)
             exit(0);
             break;
     }
+    Desenha();
+}
+
+//Submenu de espelhamento
+void MenuMirror(int op){
+    if(op == 0)
+        action = mirrorX;
+    else if(op == 1)
+        action = mirrorY;
+    else if(op == 2)
+        action = mirrorZ;
+    state = print;
+    Desenha();
 }
 
 ///Criacao do Menu
 void CriaMenu()
 {
-    int menu,submenu1,submenu2;
+    int menu,submenu1,submenu2, submenu3;
 
     submenu1 = glutCreateMenu(MenuPrimitiva);
     glutAddMenuEntry("Cubo",0);
@@ -242,6 +257,11 @@ void CriaMenu()
     glutAddMenuEntry("Verde",1);
     glutAddMenuEntry("Azul",2);
 
+    submenu3 = glutCreateMenu(MenuMirror);
+    glutAddMenuEntry("Eixo X",0);
+    glutAddMenuEntry("Eixo Y",1);
+    glutAddMenuEntry("Eixo Z",2);
+
 
     menu = glutCreateMenu(MenuPrincipal);
     glutAddSubMenu("Primitivas",submenu1);
@@ -250,6 +270,7 @@ void CriaMenu()
     glutAddMenuEntry("Transladar", 4);
     glutAddMenuEntry("Escalar", 5);
     glutAddMenuEntry("Rotacionar", 6);
+    glutAddSubMenu("Espelhar em relacao a eixo", submenu3);
     glutAddMenuEntry("Sair", 7);
     glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
@@ -261,8 +282,9 @@ void GerenciaMouse(int button, int state, int x, int y)
         //Quando o botao eh clicado
          if (state == GLUT_DOWN)
             CriaMenu();
-	EspecificaParametrosVisualizacao();
-	glutPostRedisplay();
+	//EspecificaParametrosVisualizacao();
+	//glutPostRedisplay();
+    Desenha();
 }
 
 /// Função callback chamada para gerenciar eventos de teclas especiais do teclado
@@ -291,28 +313,32 @@ void GerenciaTeclado(unsigned char key, int x, int y){
     }
     else if(key == 13){ // Enter
         if(state == scanAngle){
-            ang = std::stof(input);
+            angAux = std::stof(input);
             toPrint = "Insira o valor de X: ";
             state = scanX;
         }
         else if (state == scanX){
-            x = std::stof(input);
+            a = std::stof(input);
             toPrint = "Insira o valor de Y: ";
             state = scanY;
         }
         else if (state == scanY){
-            y = std::stof(input);
+            b = std::stof(input);
             toPrint = "Insira o valor de Z: ";
             state = scanZ;
         }
         else if (state == scanZ){
             z = std::stof(input);
-            state = waitS;
+            state = print;
             //action = waitA;
             toPrint = "";
         }
         input = "";
     }  
+    else if(key == 8 && (input.size() > 0)){
+        toPrint = toPrint.substr(0, toPrint.size()-1);
+        input = input.substr(0, input.size()-1);
+    }
     else{
         if(state != waitS){
             input += key;
@@ -325,8 +351,8 @@ void GerenciaTeclado(unsigned char key, int x, int y){
     //glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, key); // print the color
 
     //EspecificaParametrosVisualizacao();
-	glutPostRedisplay();
-    //Desenha();
+	//glutPostRedisplay();
+    Desenha();
 }
 
 /// Programa Principal
