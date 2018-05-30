@@ -200,29 +200,22 @@ void MenuPrimitiva(int op)
 void MenuPrincipal(int op)
 {
     switch(op){
-        case 3:
-            rotationX = rotationY = rotationZ = 0.0f;
-            translateX = translateY = translateZ = 0.0f;
-            scaleX = scaleY = scaleZ = 1.0f;
-            xToZoom = yToZoom = 0.0f;
-            glLoadIdentity();
-            break;
-        case 4: //transladar
+        case 3: //transladar
             state = scanX;
             toPrint = "Insira o valor de X: ";
             action = translate;
             break;
-        case 5: //escalar
+        case 4: //escalar
             state = scanX;
             toPrint = "Insira o valor de X: ";
             action = scale;
             break;
-        case 6: //rotacionar
+        case 5: //rotacionar
             state = scanAngle;
             toPrint = "Insira o valor do angulo: ";
             action = rotate;
             break;
-        case 7:
+        case 6:
             exit(0);
             break;
     }
@@ -266,12 +259,11 @@ void CriaMenu()
     menu = glutCreateMenu(MenuPrincipal);
     glutAddSubMenu("Primitivas",submenu1);
     glutAddSubMenu("Cor",submenu2);
-    glutAddMenuEntry("Reiniciar", 3); ///Reinicia o solido para a posicao inicial
-    glutAddMenuEntry("Transladar", 4);
-    glutAddMenuEntry("Escalar", 5);
-    glutAddMenuEntry("Rotacionar", 6);
+    glutAddMenuEntry("Transladar", 3);
+    glutAddMenuEntry("Escalar", 4);
+    glutAddMenuEntry("Rotacionar", 5);
     glutAddSubMenu("Espelhar em relacao a eixo", submenu3);
-    glutAddMenuEntry("Sair", 7);
+    glutAddMenuEntry("Sair", 6);
     glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
 
