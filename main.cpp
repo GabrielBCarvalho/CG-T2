@@ -11,7 +11,6 @@ using namespace std;
 #define CONE 2
 #define ESFERA 3
 #define TORUS 4
-#define DODECAEDRO 5
 
 enum State {scanAngle, scanX, scanY, scanZ, print, waitS};
 enum Action {
@@ -101,13 +100,9 @@ void Desenha(void)
     case TORUS:
         glutWireTorus(15.0f, 35.0f, 25, 25);
         break;
-    ///ESTA COMENTADO POR QUE FICA MUITO PEQUENO, MAS SE TIRAR EH SO DAR ZOOM('+') AO MAXIMO
-    //case DODECAEDRO:
-    //    glutWireDodecahedron();
-    //    break;
     }
 
-    // Printar string
+    // Printa a string
     glRasterPos2i(-50, -50);
     void * font = GLUT_BITMAP_9_BY_15;
     for (std::string::iterator i = toPrint.begin(); i != toPrint.end(); ++i)
@@ -197,9 +192,6 @@ void MenuPrimitiva(int op)
             case 3:
                      primitiva = TORUS;
                      break;
-            case 4:
-                     primitiva = DODECAEDRO;
-                     break;
     }
     glutPostRedisplay();
 }
@@ -227,7 +219,7 @@ void MenuPrincipal(int op)
             break;
         case 6: //rotacionar
             state = scanAngle;
-            toPrint = "Insira o valor do ângulo: ";
+            toPrint = "Insira o valor do angulo: ";
             action = rotate;
             break;
         case 7:
@@ -259,7 +251,6 @@ void CriaMenu()
     glutAddMenuEntry("Cone",1);
     glutAddMenuEntry("Esfera",2);
     glutAddMenuEntry("Torus",3);
-    glutAddMenuEntry("Dodecaedro",4);
 
     submenu2 = glutCreateMenu(MenuCor);
     glutAddMenuEntry("Vermelho",0);
@@ -291,8 +282,6 @@ void GerenciaMouse(int button, int state, int x, int y)
         //Quando o botao eh clicado
          if (state == GLUT_DOWN)
             CriaMenu();
-	//EspecificaParametrosVisualizacao();
-	//glutPostRedisplay();
     Desenha();
 }
 
@@ -330,21 +319,11 @@ void GerenciaTeclado(unsigned char key, int x, int y){
         if (ang >= 10) ang -= 5;
         EspecificaParametrosVisualizacao();
         glutPostRedisplay();
-        /*
-        z += 1.0f;
-        state = print;
-        action = translate; 
-        */
     }
     else if(key == '-' && state == waitS){
         if (ang <= 130) ang += 5;
         EspecificaParametrosVisualizacao();
         glutPostRedisplay();
-        /*
-        z -= 1.0f;
-        state = print;
-        action = translate;
-        */
     }
     else if(key == 13){ // Enter
         if(state == scanAngle){ // Leu o ângulo
@@ -380,11 +359,6 @@ void GerenciaTeclado(unsigned char key, int x, int y){
         }
     }
     
-    //glColor3f(0.0, 1.0, 0.0); // text color
-    //glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, key); // print the color
-
-    //EspecificaParametrosVisualizacao();
-	//glutPostRedisplay();
     Desenha();
 }
 
@@ -396,10 +370,9 @@ int main(int argc, char **argv)
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 	glutInitWindowSize(800,600);
 	mainWindow = glutCreateWindow("Visualizacao 3D");
+
 	///Callbacks
 	glutDisplayFunc(Desenha);
-
-	
     glutReshapeFunc(AlteraTamanhoJanela);
 	glutMouseFunc(GerenciaMouse);
 	glutKeyboardFunc(GerenciaTeclado);
