@@ -34,6 +34,7 @@ enum Action
     mirrorX, mirrorY, mirrorZ, zoomRotate
 };
 enum Projection {paralela, perspectiva};
+enum Shading {flat, gouraud, phong};
 
 ///Variaveis globais
 std::string toPrint = "";
@@ -43,6 +44,7 @@ std::string input = "";
 State state;
 Action action;
 Projection projection;
+Shading shading;
 
 GLfloat angle, ang, fAspect;//Define parametros para redimensionar a tela
 GLint primitiva, width, heigth;//Guarda a primitiva escolhida para ser mostrada
@@ -56,7 +58,6 @@ float scaleX = 1.0f, scaleY = 1.0f, scaleZ = 1.0f;
 
 float xRotate = 0.0f, yRotate = 0.0f;
 float a, b, z, angAux;
-
 
 
 /// Inicializa a luz
@@ -127,14 +128,16 @@ void setMaterial(int currentMaterial){
 }
 
 // Função para definir o tipo de tonalização
-void setShading(int sType) {
-    switch(sType) {
-        case 0 :
+void setShading() {
+    switch(shading) {
+        case gouraud:
             glShadeModel(GL_SMOOTH);
             break;
-        case 1 :
+        case flat:
             glShadeModel(GL_FLAT);
             break;
+        case phong:
+        	break;
     }
 }
 
@@ -189,7 +192,7 @@ void Desenha(void)
 
     glMatrixMode(GL_MODELVIEW);
     setLight();
-    setShading(0);
+    setShading();
 
 
     ///Escolha de primitiva
@@ -260,6 +263,7 @@ void InicializaMain (void)
     state = waitS;
     action = waitA;
     projection = paralela;
+    shading = flat;
     angle = 45;
     glColor3f(0.0f, 1.0f, 0.0f);
     ang=45;
@@ -379,10 +383,20 @@ void MenuProjecao(int op)
     Desenha();
 }
 
+void MenuShading(int op){
+	if(op == 0)
+		shading = flat;
+	else if(op == 1)
+		shading = gouraud;
+	else if(op == 2)
+		shading = phong;
+	Desenha();
+}
+
 ///Criacao do Menu
 void CriaMenu()
 {
-    int submenu1,submenu2, submenu3, submenu4;
+    int submenu1,submenu2, submenu3, submenu4, submenu5;
 
     ///Submenu para primitivas
     submenu1 = glutCreateMenu(MenuPrimitiva);
@@ -408,6 +422,12 @@ void CriaMenu()
     glutAddMenuEntry("Paralela",0);
     glutAddMenuEntry("Perspectiva",1);
 
+    submenu5 = glutCreateMenu(MenuShading);
+    glutAddMenuEntry("Flat", 0);
+    glutAddMenuEntry("Gouraud", 1);
+    glutAddMenuEntry("Phong", 2);
+
+
     ///Criacao do menu, uniao dos submenus
     glutCreateMenu(MenuPrincipal);
     glutAddSubMenu("Primitivas",submenu1);
@@ -418,6 +438,7 @@ void CriaMenu()
     glutAddMenuEntry("Rotacionar", 6);
     glutAddSubMenu("Espelhar em relacao a eixo", submenu3);
     glutAddSubMenu("Projecoes", submenu4);
+    glutAddSubMenu("Shading", submenu5);
     glutAddMenuEntry("Sair", 7);
     glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
