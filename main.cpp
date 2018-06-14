@@ -34,7 +34,7 @@ enum Action
     mirrorX, mirrorY, mirrorZ, zoomRotate
 };
 enum Projection {paralela, perspectiva};
-enum Shading {flat, gouraud, phong};
+enum Tonalizacao {flat, gouraud, phong};
 
 ///Variaveis globais
 std::string toPrint = "";
@@ -44,7 +44,8 @@ std::string input = "";
 State state;
 Action action;
 Projection projection;
-Shading shading;
+Tonalizacao tonalizacao;
+int material;
 
 GLfloat angle, ang, fAspect;//Define parametros para redimensionar a tela
 GLint primitiva, width, heigth;//Guarda a primitiva escolhida para ser mostrada
@@ -73,11 +74,14 @@ void initLighting() {
 /// Define a posição da luz 0
 void setLight() {
     GLfloat light_position[4] = {10.0, 10.0, -20.0, 0.0};
+    ///Seta as propriedades da luz, GL_LIGHT pode ir ate 7, esse valor é um identificador para a luz
+    ///O segundo parametro define uma propriedade no caso a posicao e seu valor
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
 }
 
 // Função utilizada para definir as propriedades do material
 void setMaterial(int currentMaterial){
+    ///Esses valores podem ser obtidos do proprio pacote openGL
     GLfloat no_mat[] = { 0.0, 0.0, 0.0, 1.0 };
     GLfloat mat_ambient[] = { 0.7, 0.7, 0.7, 1.0 };
     GLfloat mat_ambient_color[] = { 0.8, 0.8, 0.2, 1.0 };
@@ -88,9 +92,15 @@ void setMaterial(int currentMaterial){
     GLfloat high_shininess[] = { 100.0 };
     GLfloat mat_emission[] = {0.3, 0.2, 0.2, 0.0};
 
-    switch (currentMaterial){
+    ///GL_AMBIENT: define a cor da reflexao do ambiente
+    ///GL_DIFFUSE: define a cor da reflexao difusa
+    ///GL_SPECULAR e GL_SHININESS: estao relacionados ao highlight. O shininess garante o quao esparso sera
+    ///GL_EMISSION: simula uma fonte de luz (apenas simula e nao emite efitivamente)
+    ///A funcao utilizada tem como parametros qual a face que ira agir, qual a propriedate do objeto e quais os valores que afetam a propriedade
+
+    switch (currentMaterial)
+    {
     case 0:
-        // Diffuse reflection only; no ambient or specular
         glMaterialfv(GL_FRONT, GL_AMBIENT, no_mat);
         glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
         glMaterialfv(GL_FRONT, GL_SPECULAR, no_mat);
@@ -99,7 +109,6 @@ void setMaterial(int currentMaterial){
         break;
 
     case 1:
-        // Diffuse and specular reflection; low shininess; no ambient
         glMaterialfv(GL_FRONT, GL_AMBIENT, no_mat);
         glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
         glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
@@ -108,7 +117,6 @@ void setMaterial(int currentMaterial){
         break;
 
     case 2:
-        // Diffuse and specular reflection; high shininess; no ambient
         glMaterialfv(GL_FRONT, GL_AMBIENT, no_mat);
         glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
         glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
@@ -117,8 +125,39 @@ void setMaterial(int currentMaterial){
         break;
 
     case 3:
-        // Diffuse refl.; emission; no ambient or specular reflection
         glMaterialfv(GL_FRONT, GL_AMBIENT, no_mat);
+        glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
+        glMaterialfv(GL_FRONT, GL_SPECULAR, no_mat);
+        glMaterialfv(GL_FRONT, GL_SHININESS, no_shininess);
+        glMaterialfv(GL_FRONT, GL_EMISSION, mat_emission);
+        break;
+
+    case 4:
+        glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
+        glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
+        glMaterialfv(GL_FRONT, GL_SPECULAR, no_mat);
+        glMaterialfv(GL_FRONT, GL_SHININESS, no_shininess);
+        glMaterialfv(GL_FRONT, GL_EMISSION, no_mat);
+        break;
+
+    case 5:
+        glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
+        glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
+        glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+        glMaterialfv(GL_FRONT, GL_SHININESS, low_shininess);
+        glMaterialfv(GL_FRONT, GL_EMISSION, no_mat);
+        break;
+
+    case 6:
+        glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
+        glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
+        glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+        glMaterialfv(GL_FRONT, GL_SHININESS, high_shininess);
+        glMaterialfv(GL_FRONT, GL_EMISSION, no_mat);
+        break;
+
+    case 7:
+        glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
         glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
         glMaterialfv(GL_FRONT, GL_SPECULAR, no_mat);
         glMaterialfv(GL_FRONT, GL_SHININESS, no_shininess);
@@ -126,22 +165,6 @@ void setMaterial(int currentMaterial){
         break;
     }
 }
-
-// Função para definir o tipo de tonalização
-void setShading() {
-    switch(shading) {
-        case gouraud:
-            glShadeModel(GL_SMOOTH);
-            break;
-        case flat:
-            glShadeModel(GL_FLAT);
-            break;
-        case phong:
-        	break;
-    }
-}
-
-
 
 /// Função callback chamada para fazer o desenho
 void Desenha(void)
@@ -192,13 +215,24 @@ void Desenha(void)
 
     glMatrixMode(GL_MODELVIEW);
     setLight();
-    setShading();
-
+    ///Escolha da tonalizacao
+    switch (tonalizacao)
+    {
+    case gouraud:
+        glShadeModel(GL_SMOOTH);
+        break;
+    case flat:
+        glShadeModel(GL_FLAT);
+        break;
+    case phong:
+        ///Implementar phong aqui
+        break;
+    }
 
     ///Escolha de primitiva
     switch (primitiva)
     {
-        setMaterial(3);
+        setMaterial(material);
     case CUBO:
         glutSolidCube(50.0f);
         break;
@@ -263,7 +297,8 @@ void InicializaMain (void)
     state = waitS;
     action = waitA;
     projection = paralela;
-    shading = flat;
+    material = 0;
+    tonalizacao = gouraud;
     angle = 45;
     glColor3f(0.0f, 1.0f, 0.0f);
     ang=45;
@@ -383,62 +418,87 @@ void MenuProjecao(int op)
     Desenha();
 }
 
-void MenuShading(int op){
+void MenuTonalizacao(int op){
 	if(op == 0)
-		shading = flat;
+		tonalizacao = gouraud;
 	else if(op == 1)
-		shading = gouraud;
+		tonalizacao = flat;
 	else if(op == 2)
-		shading = phong;
+		tonalizacao = phong;
 	Desenha();
 }
 
+///Funcao auxiliar apenas para ser passado ao menu
+void x(int y) {};
+
 ///Criacao do Menu
-void CriaMenu()
+void CriaMenuP1()
 {
-    int submenu1,submenu2, submenu3, submenu4, submenu5;
+    int submenu[8];
 
     ///Submenu para primitivas
-    submenu1 = glutCreateMenu(MenuPrimitiva);
+    submenu[1] = glutCreateMenu(MenuPrimitiva);
     glutAddMenuEntry("Cubo",0);
     glutAddMenuEntry("Cone",1);
     glutAddMenuEntry("Esfera",2);
     glutAddMenuEntry("Torus",3);
 
     ///Submenu para cores
-    submenu2 = glutCreateMenu(MenuCor);
+    submenu[2] = glutCreateMenu(MenuCor);
     glutAddMenuEntry("Vermelho",0);
     glutAddMenuEntry("Verde",1);
     glutAddMenuEntry("Azul",2);
 
     ///Submenu para espelhamento
-    submenu3 = glutCreateMenu(MenuMirror);
+    submenu[3] = glutCreateMenu(MenuMirror);
     glutAddMenuEntry("Eixo X",0);
     glutAddMenuEntry("Eixo Y",1);
     glutAddMenuEntry("Eixo Z",2);
 
     ///Submenu para projecao
-    submenu4 = glutCreateMenu(MenuProjecao);
+    submenu[4] = glutCreateMenu(MenuProjecao);
     glutAddMenuEntry("Paralela",0);
     glutAddMenuEntry("Perspectiva",1);
 
-    submenu5 = glutCreateMenu(MenuShading);
-    glutAddMenuEntry("Flat", 0);
-    glutAddMenuEntry("Gouraud", 1);
-    glutAddMenuEntry("Phong", 2);
+
+    ///Submenu que ira controlar iluminacao, tonalizacao e material
+    submenu[5] = glutCreateMenu(x);
+    ///Submenu de tonalizacao
+    submenu[6] = glutCreateMenu(MenuTonalizacao);
+    glutAddMenuEntry("Gouraud",0);
+    glutAddMenuEntry("Flat",1);
+    glutAddMenuEntry("Phong",2);
+    glutSetMenu (submenu[5]);
+    glutAddSubMenu("Tonalizacao", submenu[6]);
+    ///Submenu de materiais
+    submenu[7] = glutCreateMenu(setMaterial);
+    glutAddMenuEntry("Apenas difuso",0);
+    glutAddMenuEntry("Difuso e especular(baixo brilho)",1);
+    glutAddMenuEntry("Difuso e especular(alto brilho)",2);
+    glutAddMenuEntry("Difuso e emissor",3);
+    glutAddMenuEntry("Reflete ambiente e difuso",4);
+    glutAddMenuEntry("Reflete ambiente, difuso e especular (baixo brilho)",5);
+    glutAddMenuEntry("Reflete ambiente, difuso e especular (alto brilho)",6);
+    glutAddMenuEntry("Reflete ambiente, difuso e emissor",7);
+    glutSetMenu (submenu[5]);
+    glutAddSubMenu("Material", submenu[7]);
+    ///Submenu de iluminacao
+    submenu[8] = glutCreateMenu(MenuTonalizacao);
+    glutSetMenu (submenu[5]);
+    glutAddSubMenu("Iluminacao", submenu[8]);
 
 
     ///Criacao do menu, uniao dos submenus
     glutCreateMenu(MenuPrincipal);
-    glutAddSubMenu("Primitivas",submenu1);
-    glutAddSubMenu("Cor",submenu2);
+    glutAddSubMenu("Primitivas",submenu[1]);
+    glutAddSubMenu("Cor",submenu[2]);
     glutAddMenuEntry("Reiniciar", 3); ///Reinicia o solido para a posicao inicial
     glutAddMenuEntry("Transladar", 4);
     glutAddMenuEntry("Escalar", 5);
     glutAddMenuEntry("Rotacionar", 6);
-    glutAddSubMenu("Espelhar em relacao a eixo", submenu3);
-    glutAddSubMenu("Projecoes", submenu4);
-    glutAddSubMenu("Shading", submenu5);
+    glutAddSubMenu("Espelhar em relacao a eixo", submenu[3]);
+    glutAddSubMenu("Projecoes", submenu[4]);
+    glutAddSubMenu("Tonalidade, iluminacao, rendering", submenu[5]);
     glutAddMenuEntry("Sair", 7);
     glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
@@ -446,10 +506,10 @@ void CriaMenu()
 ///Função callback chamada para gerenciar eventos do mouse
 void GerenciaMouse(int button, int state, int x, int y)
 {
+	///Quando o botao direito eh clicado
     if (button == GLUT_RIGHT_BUTTON)
-        //Quando o botao eh clicado
         if (state == GLUT_DOWN)
-            CriaMenu();
+            CriaMenuP1();
     Desenha();
 }
 
