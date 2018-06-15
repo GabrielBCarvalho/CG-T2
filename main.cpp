@@ -25,6 +25,7 @@ using namespace std;
 #define CONE 2
 #define ESFERA 3
 #define TORUS 4
+#define PIRAMIDE 5
 
 ///Definem estados para o codigo, bem como escolhas do usuario
 enum State {scanAngle, scanX, scanY, scanZ, print, waitS};
@@ -60,7 +61,10 @@ float scaleX = 1.0f, scaleY = 1.0f, scaleZ = 1.0f;
 float xRotate = 0.0f, yRotate = 0.0f;
 float a, b, z, angAux;
 
-
+/*
+vec3 N;
+vec3 v;
+*/
 /// Inicializa a luz
 void initLighting() {
     // Informa que irá utilizar iluminação
@@ -213,7 +217,7 @@ void Desenha(void)
         action = waitA;
     }
 
-    glMatrixMode(GL_MODELVIEW);
+    //glMatrixMode(GL_MODELVIEW);
     setLight();
     ///Escolha da tonalizacao
     switch (tonalizacao)
@@ -224,15 +228,33 @@ void Desenha(void)
     case flat:
         glShadeModel(GL_FLAT);
         break;
-    case phong:
-        ///Implementar phong aqui
+    case phong:/*
+        vec3 L = normalize(gl_LightSource[0].position.xyz - v);   
+       vec3 E = normalize(-v); // we are in Eye Coordinates, so EyePos is (0,0,0)  
+       vec3 R = normalize(-reflect(L,N));  
+     
+       //calculate Ambient Term:  
+       vec4 Iamb = gl_FrontLightProduct[0].ambient;    
+
+       //calculate Diffuse Term:  
+       vec4 Idiff = gl_FrontLightProduct[0].diffuse * max(dot(N,L), 0.0);
+       Idiff = clamp(Idiff, 0.0, 1.0);     
+       
+       // calculate Specular Term:
+       vec4 Ispec = gl_FrontLightProduct[0].specular 
+                    * pow(max(dot(R,E),0.0),0.3*gl_FrontMaterial.shininess);
+       Ispec = clamp(Ispec, 0.0, 1.0); 
+
+       // write Total Color:  
+       gl_FragColor = gl_FrontLightModelProduct.sceneColor + Iamb + Idiff + Ispec;*/
         break;
     }
 
+    setMaterial(material);
     ///Escolha de primitiva
+   // primitiva = 6;
     switch (primitiva)
     {
-        setMaterial(material);
     case CUBO:
         glutSolidCube(50.0f);
         break;
@@ -245,34 +267,89 @@ void Desenha(void)
     case TORUS:
         glutWireTorus(15.0f, 35.0f, 25, 25);
         break;
-    }
+    case PIRAMIDE:
+		glBegin(GL_TRIANGLES);           // Begin drawing the pyramid with 4 triangles
+		// Front
+		glColor3f(1.0f, 0.0f, 0.0f);     // Red
+		glVertex3f( 0.0f, 1.0f, 0.0f);
+		glColor3f(0.0f, 1.0f, 0.0f);     // Green
+		glVertex3f(-1.0f, -1.0f, 1.0f);
+		glColor3f(0.0f, 0.0f, 1.0f);     // Blue
+		glVertex3f(1.0f, -1.0f, 1.0f);
 
-    ///Escolha de projecao
-    switch (projection)
-    {
-    case perspectiva:
-        // Especifica sistema de coordenadas de projeção
-        glMatrixMode(GL_PROJECTION);
-        // Inicializa sistema de coordenadas de projeção
-        glLoadIdentity();
-        // Especifica a projeção perspectiva
-        gluPerspective(ang,fAspect,1,1000);
-        // Especifica sistema de coordenadas do modelo
-        glMatrixMode(GL_MODELVIEW);
-        // Inicializa sistema de coordenadas do modelo
-        glLoadIdentity();
-        // Especifica posição do observador, do alvo e da parte de cima
-        gluLookAt(0,80,200, 0,0,0, 0,1,0);
-        break;
+		// Right
+		glColor3f(1.0f, 0.0f, 0.0f);     // Red
+		glVertex3f(0.0f, 1.0f, 0.0f);
+		glColor3f(0.0f, 0.0f, 1.0f);     // Blue
+		glVertex3f(1.0f, -1.0f, 1.0f);
+		glColor3f(0.0f, 1.0f, 0.0f);     // Green
+		glVertex3f(1.0f, -1.0f, -1.0f);
 
-    case paralela:
-        glMatrixMode(GL_PROJECTION);
-        glLoadIdentity();
-        glOrtho(-width, width, -heigth,heigth, 1, 1000);
-        glMatrixMode(GL_MODELVIEW);
-        glLoadIdentity();
-        gluLookAt(0,80,200, 0,0,0, 0,1,0);
-        break;
+		// Back
+		glColor3f(1.0f, 0.0f, 0.0f);     // Red
+		glVertex3f(0.0f, 1.0f, 0.0f);
+		glColor3f(0.0f, 1.0f, 0.0f);     // Green
+		glVertex3f(1.0f, -1.0f, -1.0f);
+		glColor3f(0.0f, 0.0f, 1.0f);     // Blue
+		glVertex3f(-1.0f, -1.0f, -1.0f);
+
+		// Left
+		glColor3f(1.0f,0.0f,0.0f);       // Red
+		glVertex3f( 0.0f, 1.0f, 0.0f);
+		glColor3f(0.0f,0.0f,1.0f);       // Blue
+		glVertex3f(-1.0f,-1.0f,-1.0f);
+		glColor3f(0.0f,1.0f,0.0f);       // Green
+		glVertex3f(-1.0f,-1.0f, 1.0f);
+		glEnd();   // Done drawing the pyramid
+		break;
+	case 6:
+			// Desenha um cubo
+		
+		glBegin(GL_QUADS);			// Face posterior
+			glNormal3f(0.0, 0.0, 1.0);	// Normal da face
+			glVertex3f(40.0, 40.0, 40.0);
+			glVertex3f(-40.0, 40.0, 40.0);
+			glVertex3f(-40.0, -40.0, 40.0);
+			glVertex3f(40.0, -40.0, 40.0);
+		glEnd();
+		
+
+		glBegin(GL_QUADS);			// Face frontal
+			glNormal3f(0.0, 0.0, -1.0); 	// Normal da face
+			glVertex3f(40.0, 40.0, -40.0);
+			glVertex3f(40.0, -40.0, -40.0);
+			glVertex3f(-40.0, -40.0, -40.0);
+			glVertex3f(-40.0, 40.0, -40.0);
+		glEnd();
+		glBegin(GL_QUADS);			// Face lateral esquerda
+			glNormal3f(-1.0, 0.0, 0.0); 	// Normal da face
+			glVertex3f(-40.0, 40.0, 40.0);
+			glVertex3f(-40.0, 40.0, -40.0);
+			glVertex3f(-40.0, -40.0, -40.0);
+			glVertex3f(-40.0, -40.0, 40.0);
+		glEnd();
+		glBegin(GL_QUADS);			// Face lateral direita
+			glNormal3f(1.0, 0.0, 0.0);	// Normal da face
+			glVertex3f(40.0, 40.0, 40.0);
+			glVertex3f(40.0, -40.0, 40.0);
+			glVertex3f(40.0, -40.0, -40.0);
+			glVertex3f(40.0, 40.0, -40.0);
+		glEnd();
+		glBegin(GL_QUADS);			// Face superior
+			glNormal3f(0.0, 1.0, 0.0);  	// Normal da face
+			glVertex3f(-40.0, 40.0, -40.0);
+			glVertex3f(-40.0, 40.0, 40.0);
+			glVertex3f(40.0, 40.0, 40.0);
+			glVertex3f(40.0, 40.0, -40.0);
+		glEnd();
+		glBegin(GL_QUADS);			// Face inferior
+			glNormal3f(0.0, -1.0, 0.0); 	// Normal da face
+			glVertex3f(-40.0, -40.0, -40.0);
+			glVertex3f(40.0, -40.0, -40.0);
+			glVertex3f(40.0, -40.0, 40.0);
+			glVertex3f(-40.0, -40.0, 40.0);
+		glEnd();
+	break;
     }
 
     /// Printa a string
@@ -302,6 +379,41 @@ void InicializaMain (void)
     angle = 45;
     glColor3f(0.0f, 1.0f, 0.0f);
     ang=45;
+/*
+    v = vec3(gl_ModelViewMatrix * gl_Vertex);       
+    N = normalize(gl_NormalMatrix * gl_Normal);
+
+    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;*/
+}
+
+void EspecificaParametrosVisualizacao(){
+    ///Escolha de projecao
+    switch (projection)
+    {
+    case perspectiva:
+        // Especifica sistema de coordenadas de projeção
+        glMatrixMode(GL_PROJECTION);
+        // Inicializa sistema de coordenadas de projeção
+        glLoadIdentity();
+        // Especifica a projeção perspectiva
+        gluPerspective(ang,fAspect,1,1000);
+        // Especifica sistema de coordenadas do modelo
+        glMatrixMode(GL_MODELVIEW);
+        // Inicializa sistema de coordenadas do modelo
+        glLoadIdentity();
+        // Especifica posição do observador, do alvo e da parte de cima
+        gluLookAt(0,80,200, 0,0,0, 0,1,0);
+        break;
+
+    case paralela:
+        glMatrixMode(GL_PROJECTION);
+        glLoadIdentity();
+        glOrtho(-width, width, -heigth,heigth, 1, 1000);
+        glMatrixMode(GL_MODELVIEW);
+        glLoadIdentity();
+        gluLookAt(0,80,200, 0,0,0, 0,1,0);
+        break;
+    }
 }
 
 ///Função callback chamada quando o tamanho da janela é alterado
@@ -317,7 +429,10 @@ void AlteraTamanhoJanela(GLsizei w, GLsizei h)
     glViewport(0, 0, w, h);
     width = w/5;
     heigth = h/5;
+    EspecificaParametrosVisualizacao();
 }
+
+
 
 ///Container para todo o menu(tambem guarda a funcao de sair do programa)
 void MenuPrincipal(int op)
@@ -391,6 +506,8 @@ void MenuPrimitiva(int op)
     case 3:
         primitiva = TORUS;
         break;
+    case 4:
+        primitiva = PIRAMIDE;
     }
     glutPostRedisplay();
 }
@@ -404,7 +521,7 @@ void MenuMirror(int op)
         action = mirrorY;
     else if(op == 2)
         action = mirrorZ;
-    state = print;
+    //state = print;
     Desenha();
 }
 
@@ -415,6 +532,7 @@ void MenuProjecao(int op)
         projection = paralela;
     else if(op == 1)
         projection = perspectiva;
+    EspecificaParametrosVisualizacao();
     Desenha();
 }
 
@@ -442,6 +560,7 @@ void CriaMenuP1()
     glutAddMenuEntry("Cone",1);
     glutAddMenuEntry("Esfera",2);
     glutAddMenuEntry("Torus",3);
+    glutAddMenuEntry("Piramide",4);
 
     ///Submenu para cores
     submenu[2] = glutCreateMenu(MenuCor);
