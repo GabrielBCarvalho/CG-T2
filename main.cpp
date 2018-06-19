@@ -61,10 +61,7 @@ float scaleX = 1.0f, scaleY = 1.0f, scaleZ = 1.0f;
 float xRotate = 0.0f, yRotate = 0.0f;
 float a, b, z, angAux;
 
-/*
-vec3 N;
-vec3 v;
-*/
+
 /// Inicializa a luz
 void initLighting() {
     // Informa que irá utilizar iluminação
@@ -102,6 +99,7 @@ void setMaterial(int currentMaterial){
     ///GL_EMISSION: simula uma fonte de luz (apenas simula e nao emite efitivamente)
     ///A funcao utilizada tem como parametros qual a face que ira agir, qual a propriedate do objeto e quais os valores que afetam a propriedade
 
+    material = currentMaterial;
     switch (currentMaterial)
     {
     case 0:
@@ -217,7 +215,6 @@ void Desenha(void)
         action = waitA;
     }
 
-    //glMatrixMode(GL_MODELVIEW);
     setLight();
     ///Escolha da tonalizacao
     switch (tonalizacao)
@@ -228,31 +225,13 @@ void Desenha(void)
     case flat:
         glShadeModel(GL_FLAT);
         break;
-    case phong:/*
-        vec3 L = normalize(gl_LightSource[0].position.xyz - v);   
-       vec3 E = normalize(-v); // we are in Eye Coordinates, so EyePos is (0,0,0)  
-       vec3 R = normalize(-reflect(L,N));  
-     
-       //calculate Ambient Term:  
-       vec4 Iamb = gl_FrontLightProduct[0].ambient;    
-
-       //calculate Diffuse Term:  
-       vec4 Idiff = gl_FrontLightProduct[0].diffuse * max(dot(N,L), 0.0);
-       Idiff = clamp(Idiff, 0.0, 1.0);     
-       
-       // calculate Specular Term:
-       vec4 Ispec = gl_FrontLightProduct[0].specular 
-                    * pow(max(dot(R,E),0.0),0.3*gl_FrontMaterial.shininess);
-       Ispec = clamp(Ispec, 0.0, 1.0); 
-
-       // write Total Color:  
-       gl_FragColor = gl_FrontLightModelProduct.sceneColor + Iamb + Idiff + Ispec;*/
+    case phong:
         break;
     }
 
     setMaterial(material);
     ///Escolha de primitiva
-   // primitiva = 6;
+
     switch (primitiva)
     {
     case CUBO:
@@ -267,89 +246,6 @@ void Desenha(void)
     case TORUS:
         glutWireTorus(15.0f, 35.0f, 25, 25);
         break;
-    case PIRAMIDE:
-		glBegin(GL_TRIANGLES);           // Begin drawing the pyramid with 4 triangles
-		// Front
-		glColor3f(1.0f, 0.0f, 0.0f);     // Red
-		glVertex3f( 0.0f, 1.0f, 0.0f);
-		glColor3f(0.0f, 1.0f, 0.0f);     // Green
-		glVertex3f(-1.0f, -1.0f, 1.0f);
-		glColor3f(0.0f, 0.0f, 1.0f);     // Blue
-		glVertex3f(1.0f, -1.0f, 1.0f);
-
-		// Right
-		glColor3f(1.0f, 0.0f, 0.0f);     // Red
-		glVertex3f(0.0f, 1.0f, 0.0f);
-		glColor3f(0.0f, 0.0f, 1.0f);     // Blue
-		glVertex3f(1.0f, -1.0f, 1.0f);
-		glColor3f(0.0f, 1.0f, 0.0f);     // Green
-		glVertex3f(1.0f, -1.0f, -1.0f);
-
-		// Back
-		glColor3f(1.0f, 0.0f, 0.0f);     // Red
-		glVertex3f(0.0f, 1.0f, 0.0f);
-		glColor3f(0.0f, 1.0f, 0.0f);     // Green
-		glVertex3f(1.0f, -1.0f, -1.0f);
-		glColor3f(0.0f, 0.0f, 1.0f);     // Blue
-		glVertex3f(-1.0f, -1.0f, -1.0f);
-
-		// Left
-		glColor3f(1.0f,0.0f,0.0f);       // Red
-		glVertex3f( 0.0f, 1.0f, 0.0f);
-		glColor3f(0.0f,0.0f,1.0f);       // Blue
-		glVertex3f(-1.0f,-1.0f,-1.0f);
-		glColor3f(0.0f,1.0f,0.0f);       // Green
-		glVertex3f(-1.0f,-1.0f, 1.0f);
-		glEnd();   // Done drawing the pyramid
-		break;
-	case 6:
-			// Desenha um cubo
-		
-		glBegin(GL_QUADS);			// Face posterior
-			glNormal3f(0.0, 0.0, 1.0);	// Normal da face
-			glVertex3f(40.0, 40.0, 40.0);
-			glVertex3f(-40.0, 40.0, 40.0);
-			glVertex3f(-40.0, -40.0, 40.0);
-			glVertex3f(40.0, -40.0, 40.0);
-		glEnd();
-		
-
-		glBegin(GL_QUADS);			// Face frontal
-			glNormal3f(0.0, 0.0, -1.0); 	// Normal da face
-			glVertex3f(40.0, 40.0, -40.0);
-			glVertex3f(40.0, -40.0, -40.0);
-			glVertex3f(-40.0, -40.0, -40.0);
-			glVertex3f(-40.0, 40.0, -40.0);
-		glEnd();
-		glBegin(GL_QUADS);			// Face lateral esquerda
-			glNormal3f(-1.0, 0.0, 0.0); 	// Normal da face
-			glVertex3f(-40.0, 40.0, 40.0);
-			glVertex3f(-40.0, 40.0, -40.0);
-			glVertex3f(-40.0, -40.0, -40.0);
-			glVertex3f(-40.0, -40.0, 40.0);
-		glEnd();
-		glBegin(GL_QUADS);			// Face lateral direita
-			glNormal3f(1.0, 0.0, 0.0);	// Normal da face
-			glVertex3f(40.0, 40.0, 40.0);
-			glVertex3f(40.0, -40.0, 40.0);
-			glVertex3f(40.0, -40.0, -40.0);
-			glVertex3f(40.0, 40.0, -40.0);
-		glEnd();
-		glBegin(GL_QUADS);			// Face superior
-			glNormal3f(0.0, 1.0, 0.0);  	// Normal da face
-			glVertex3f(-40.0, 40.0, -40.0);
-			glVertex3f(-40.0, 40.0, 40.0);
-			glVertex3f(40.0, 40.0, 40.0);
-			glVertex3f(40.0, 40.0, -40.0);
-		glEnd();
-		glBegin(GL_QUADS);			// Face inferior
-			glNormal3f(0.0, -1.0, 0.0); 	// Normal da face
-			glVertex3f(-40.0, -40.0, -40.0);
-			glVertex3f(40.0, -40.0, -40.0);
-			glVertex3f(40.0, -40.0, 40.0);
-			glVertex3f(-40.0, -40.0, 40.0);
-		glEnd();
-	break;
     }
 
     /// Printa a string
@@ -379,11 +275,6 @@ void InicializaMain (void)
     angle = 45;
     glColor3f(0.0f, 1.0f, 0.0f);
     ang=45;
-/*
-    v = vec3(gl_ModelViewMatrix * gl_Vertex);       
-    N = normalize(gl_NormalMatrix * gl_Normal);
-
-    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;*/
 }
 
 void EspecificaParametrosVisualizacao(){
@@ -521,7 +412,6 @@ void MenuMirror(int op)
         action = mirrorY;
     else if(op == 2)
         action = mirrorZ;
-    //state = print;
     Desenha();
 }
 
@@ -541,8 +431,6 @@ void MenuTonalizacao(int op){
 		tonalizacao = gouraud;
 	else if(op == 1)
 		tonalizacao = flat;
-	else if(op == 2)
-		tonalizacao = phong;
 	Desenha();
 }
 
@@ -580,13 +468,12 @@ void CriaMenuP1()
     glutAddMenuEntry("Perspectiva",1);
 
 
-    ///Submenu que ira controlar iluminacao, tonalizacao e material
+    ///Submenu que ira controlar tonalizacao e material
     submenu[5] = glutCreateMenu(x);
     ///Submenu de tonalizacao
     submenu[6] = glutCreateMenu(MenuTonalizacao);
     glutAddMenuEntry("Gouraud",0);
     glutAddMenuEntry("Flat",1);
-    glutAddMenuEntry("Phong",2);
     glutSetMenu (submenu[5]);
     glutAddSubMenu("Tonalizacao", submenu[6]);
     ///Submenu de materiais
@@ -601,10 +488,6 @@ void CriaMenuP1()
     glutAddMenuEntry("Reflete ambiente, difuso e emissor",7);
     glutSetMenu (submenu[5]);
     glutAddSubMenu("Material", submenu[7]);
-    ///Submenu de iluminacao
-    submenu[8] = glutCreateMenu(MenuTonalizacao);
-    glutSetMenu (submenu[5]);
-    glutAddSubMenu("Iluminacao", submenu[8]);
 
 
     ///Criacao do menu, uniao dos submenus
@@ -617,7 +500,7 @@ void CriaMenuP1()
     glutAddMenuEntry("Rotacionar", 6);
     glutAddSubMenu("Espelhar em relacao a eixo", submenu[3]);
     glutAddSubMenu("Projecoes", submenu[4]);
-    glutAddSubMenu("Tonalidade, iluminacao, rendering", submenu[5]);
+    glutAddSubMenu("Tonalidade, materiais", submenu[5]);
     glutAddMenuEntry("Sair", 7);
     glutAttachMenu(GLUT_RIGHT_BUTTON);
 }
