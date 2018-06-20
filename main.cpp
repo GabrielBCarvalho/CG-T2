@@ -397,8 +397,6 @@ void MenuPrimitiva(int op)
     case 3:
         primitiva = TORUS;
         break;
-    case 4:
-        primitiva = PIRAMIDE;
     }
     glutPostRedisplay();
 }
@@ -448,7 +446,6 @@ void CriaMenuP1()
     glutAddMenuEntry("Cone",1);
     glutAddMenuEntry("Esfera",2);
     glutAddMenuEntry("Torus",3);
-    glutAddMenuEntry("Piramide",4);
 
     ///Submenu para cores
     submenu[2] = glutCreateMenu(MenuCor);
